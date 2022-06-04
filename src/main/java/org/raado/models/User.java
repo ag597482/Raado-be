@@ -1,11 +1,14 @@
 package org.raado.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.vz.mongodb.jackson.Id;
 import net.vz.mongodb.jackson.ObjectId;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 
 import java.util.List;
 import java.util.UUID;
@@ -16,9 +19,11 @@ import java.util.UUID;
 @NoArgsConstructor
 public class User {
 
-    @ObjectId
-    @Id
-    private String userId;
+
+    @JsonIgnore
+    @JsonProperty("_id")
+    private final String userId = UUID.randomUUID().toString();
+
     private String name;
     private String phoneNo;
     private String password;

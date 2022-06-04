@@ -7,12 +7,15 @@ import com.mongodb.*;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
 import com.mongodb.client.internal.MongoDatabaseImpl;
 import org.raado.AppConfig;
 import org.raado.configs.MongoConfig;
+import org.raado.models.Transaction;
 
 import javax.inject.Named;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 import static org.reflections.Reflections.log;
 
@@ -33,19 +36,7 @@ public class GuiceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    public DB providesMongoDb(AppConfig appConfig) throws UnknownHostException {
-//        final Mongo mongo = new Mongo(appConfig.getMongoConfig().getMongohost(), appConfig.getMongoConfig().getMongoport());
-//        return mongo.getDB(appConfig.getMongoConfig().getMongodbName());
-        return null;
-    }
-
-    @Provides
-    @Singleton
     public MongoDatabase providesMongoDbGlobal(AppConfig appConfig)  {
-//        MongoClient mongoClient = MongoClients.create("mongodb+srv://raado:inventory123@realmcluster.e9nnz.mongodb.net/?retryWrites=true&w=majority");
-//
-//        return mongoClient.getDatabase("raado");
-
         ConnectionString connectionString = new ConnectionString("mongodb+srv://inventory-admin:inventory123@inventory.rbcanbq.mongodb.net/?retryWrites=true&w=majority");
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(connectionString)
@@ -54,9 +45,9 @@ public class GuiceModule extends AbstractModule {
                         .build())
                 .build();
         MongoClient mongoClient = MongoClients.create(settings);
-        MongoDatabase mongoDatabase = mongoClient.getDatabase("inventory");
-        log.info("aman123" + mongoDatabase.toString());
-        log.info("aman123" + mongoDatabase.getCollection("transactions").find());
+        MongoDatabase mongoDatabase = mongoClient.getDatabase(appConfig.getMongoConfig().getMongodbName());
+        ArrayList<String> databases = mongoClient.listDatabaseNames().into(new ArrayList<>());
+        log.info("databases present are" + databases);
         return mongoDatabase;
     }
 

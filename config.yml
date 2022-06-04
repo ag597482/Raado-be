@@ -20,9 +20,9 @@ server:
 
 defaultName: aman
 
-userCollectionName: users
+userCollectionName: raado-users
 
-transactionCollectionName: transactions
+transactionCollectionName: raado-transactions
 
 swagger:
   resourcePackage: org.raado.resources
@@ -31,4 +31,4 @@ swagger:
 
 mongoConfig:
   mongohost: 127.0.0.1
-  mongodbName: raado
+  mongodbName: inventory
