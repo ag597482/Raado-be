@@ -1,36 +1,37 @@
 package org.raado.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.vz.mongodb.jackson.Id;
-import net.vz.mongodb.jackson.ObjectId;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
+import java.util.Date;
 import java.util.Map;
-import java.util.UUID;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @AllArgsConstructor
 @NoArgsConstructor
 public class Transaction {
-
-    @JsonIgnore
-    private String _id;
-
-    @JsonIgnore
-    private final String transactionId = UUID.randomUUID().toString();
-
+    @BsonProperty
+    private String transactionId;
+    @BsonProperty
     private ProcessName fromProcess;
+    @BsonProperty
     private ProcessName toProcess;
-    private long timeOfTransaction;
-    private long timeOfApproval;
+    @BsonProperty
+    private Date timeOfTransaction;
+    @BsonProperty
+    private Date timeOfApproval;
+    @BsonProperty
     private TransactionStatus status;
+    @BsonProperty
     private String comment;
+    @BsonProperty
     private Map<String, Integer> entries;
-    private String fromUserPhone;
-    private String toUserPhone;
+    @BsonProperty
+    private String fromUserId;
+    @BsonProperty
+    private String toUserId;
 }

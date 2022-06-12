@@ -1,13 +1,13 @@
 package org.raado.utils;
 
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 
-import static org.reflections.Reflections.log;
-
+@Slf4j
 @NoArgsConstructor
 public class RaadoUtils<T> {
 
@@ -21,5 +21,4 @@ public class RaadoUtils<T> {
         }
         return null;
     }
-
 }

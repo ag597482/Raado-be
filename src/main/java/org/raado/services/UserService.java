@@ -12,22 +12,26 @@ import java.util.List;
 @Slf4j
 @Singleton
 public class UserService {
-    private UserCommands userCommands;
+    private final UserCommands userCommands;
 
     @Inject
     public UserService(final UserCommands userCommands) {
         this.userCommands = userCommands;
     }
 
-    public boolean addUser(User user) {
-        return userCommands.addUser(user);
+    public User addUser(User user) {
+         return userCommands.addUser(user);
     }
 
-    public boolean updateUserPermissions(String phoneNo, List<Permission> permissions) {
-        return userCommands.updateUserPermissions(phoneNo, permissions);
+    public boolean updateUserPermissions(String userId, List<Permission> permissions) {
+        return userCommands.updateUserPermissions(userId, permissions);
     }
 
     public List<User> getAllUsers() {
         return userCommands.getUsers();
+    }
+
+    public User validateUser(String phoneNo, String password) {
+        return userCommands.validateAuth(phoneNo, password);
     }
 }

@@ -14,10 +14,10 @@ public class MongoConfig {
     private String mongohost;
 
     @JsonProperty
-    private int mongoport = 27017;
+    private final int mongoport = 27017;
 
     @JsonProperty
     @NotEmpty
     @Builder.Default
-    private String mongodbName = "raado";
+    private final String mongodbName = "raado";
 }

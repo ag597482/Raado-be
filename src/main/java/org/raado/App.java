@@ -10,6 +10,7 @@ import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import net.vz.mongodb.jackson.JacksonDBCollection;
+import org.raado.exceptions.RaadoExceptionMapper;
 import org.raado.models.User;
 import org.raado.modules.GuiceModule;
 import org.raado.resources.UserResource;
@@ -45,8 +46,7 @@ public class App extends Application<AppConfig> {
     @Override
     public void run(final AppConfig configuration,
                     final Environment environment) {
-        //environment.jersey().register(new UserResource(configuration.getDefaultName()));
-
+        environment.jersey().register(new RaadoExceptionMapper());
     }
 
 }

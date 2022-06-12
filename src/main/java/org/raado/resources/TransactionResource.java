@@ -6,6 +6,7 @@ import io.swagger.annotations.Api;
 import org.raado.models.ProcessName;
 import org.raado.models.Transaction;
 import org.raado.models.TransactionStatus;
+import org.raado.response.RaadoResponse;
 import org.raado.services.TransactionService;
 
 import javax.validation.Valid;
@@ -29,35 +30,49 @@ public class TransactionResource {
     @Consumes(value = MediaType.APPLICATION_JSON)
     @Timed
     @Path("/addTransaction")
-    public Boolean addTransaction(@Valid Transaction transaction) {
-        return transactionService.addTransaction(transaction);
+    public RaadoResponse<Boolean> addTransaction(@Valid Transaction transaction) {
+        return RaadoResponse.<Boolean>builder()
+                .success(true)
+                .data(transactionService.addTransaction(transaction))
+                .build();
     }
 
     @PATCH
     @Consumes(value = MediaType.APPLICATION_JSON)
     @Timed
     @Path("/updateTransaction")
-    public Boolean updateTransaction(@QueryParam("transactionId") final String transactionId, @Valid Transaction transaction) {
-        return transactionService.updateTransaction(transactionId, transaction);
+    public RaadoResponse<Boolean> updateTransaction(@QueryParam("transactionId") final String transactionId,
+                                                    @QueryParam("transactionStatus") final TransactionStatus transactionStatus,
+                                                    @QueryParam("comment") final String comment) {
+        return RaadoResponse.<Boolean>builder()
+                .success(true)
+                .data(transactionService.updateTransaction(transactionId, transactionStatus, comment))
+                .build();
     }
 
     @GET
     @Produces(value = MediaType.APPLICATION_JSON)
     @Timed
     @Path("/getTransactions")
-    public List<Transaction> getTransactions() {
-        return transactionService.getAllTransactions();
+    public RaadoResponse<List<Transaction>> getTransactions() {
+        return RaadoResponse.<List<Transaction>>builder()
+                .success(true)
+                .data(transactionService.getAllTransactions())
+                .build();
     }
 
     @GET
     @Produces(value = MediaType.APPLICATION_JSON)
     @Timed
     @Path("/getFilteredTransactions")
-    public List<Transaction> getFilteredTransactions(@QueryParam("fromProcess") ProcessName fromProcess,
+    public RaadoResponse<List<Transaction>> getFilteredTransactions(@QueryParam("fromProcess") ProcessName fromProcess,
                                                      @QueryParam("toProcess")  ProcessName toProcess,
                                                      @QueryParam("fromUserPhone") String fromUserPhone,
                                                      @QueryParam("toUserPhone") String toUserPhone,
                                                      @QueryParam("status") TransactionStatus status) {
-        return transactionService.getFilteredTransactions(fromProcess, toProcess, fromUserPhone, toUserPhone, status);
+        return RaadoResponse.<List<Transaction>>builder()
+                .success(true)
+                .data(transactionService.getFilteredTransactions(fromProcess, toProcess, fromUserPhone, toUserPhone, status))
+                .build();
     }
 }

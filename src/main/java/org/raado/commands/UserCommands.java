@@ -2,40 +2,31 @@ package org.raado.commands;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.internal.MongoDatabaseImpl;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.UpdateOptions;
-import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
-import net.vz.mongodb.jackson.DBCursor;
-import net.vz.mongodb.jackson.DBQuery;
-import net.vz.mongodb.jackson.JacksonDBCollection;
-import net.vz.mongodb.jackson.WriteResult;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.raado.exceptions.ErrorCode;
+import org.raado.exceptions.RaadoException;
 import org.raado.models.Permission;
-import org.raado.models.Transaction;
 import org.raado.models.User;
 import org.raado.utils.RaadoUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
-import static org.reflections.Reflections.log;
 
+@Slf4j
 public class UserCommands {
 
-    private MongoCollection<Document> userCollection;
+    private final MongoCollection<Document> userCollection;
 
     RaadoUtils<User> raadoUtils;
 
@@ -45,39 +36,47 @@ public class UserCommands {
         raadoUtils = new RaadoUtils<User>();
     }
 
-    public boolean addUser(final User user) {
-        return userCollection.insertOne(raadoUtils.convertToDocument(user)).wasAcknowledged();
+    public User addUser(final User user) {
+        boolean validPhoneNumber = validatePhone(user);
+        if (!validPhoneNumber) {
+            throw new RaadoException("Account Already exists with the given phone number",
+                    ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
+        }
+        if (!user.isAdmin()) {
+            user.setPermissions(new ArrayList<>());
+        }
+        String userId = "UR" + UUID.randomUUID();
+        user.setUserId(userId);
+        if(userCollection.insertOne(raadoUtils.convertToDocument(user)).wasAcknowledged()) {
+            return getUserById(userId);
+        }
+        throw new RaadoException("Network error please try after sometime.",
+                ErrorCode.INTERNAL_ERROR);
     }
 
-    public boolean updateUserPermissions(final String phoneNo, final List<Permission> permissions) {
-        final Document query = new Document().append("phoneNo",  phoneNo);
-        Bson updates =
-                Updates.set("permissions", permissions);
-        UpdateOptions options = new UpdateOptions().upsert(true);
+    private boolean validatePhone(User user) {
+        final List<User> allUsers = getUsers();
+        final List<User> samePhoneNumber = allUsers.stream()
+                .filter(user1 -> user1.getPhoneNo().equals(user.getPhoneNo())).toList();
+        return samePhoneNumber.size() <= 0;
+    }
 
-
+    public boolean updateUserPermissions(final String userId, final List<Permission> permissions) {
+        final Document query = new Document().append("userId",  userId);
+        boolean successfulUpdate = false;
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
-            User user = objectMapper.readValue(userCollection.find().filter(query).iterator().next().toJson(), User.class);
-
-//            User updatedUser = new User(user.getName(), user.getPhoneNo(), user.getPassword(), user.isAdmin(), permissions);
-            //userCollection.updateOne(user, )
-            UpdateResult result = userCollection.updateOne(Filters.eq("phoneNo", phoneNo), Updates.set("permissions", permissions));
-            //userCollection.updateOne(query, updates);
-            log.info("Modified document count: " + result.getModifiedCount());
-            log.info("Upserted id: " + result.getUpsertedId()); // only contains a value when an upsert is performed
+            final User user = objectMapper.readValue(userCollection.find(query).iterator().next().toJson(), User.class);
+            final User updatedUser = new User(user);
+            updatedUser.setPermissions(permissions);
+            UpdateResult result = userCollection.replaceOne(query, raadoUtils.convertToDocument(updatedUser));
+            successfulUpdate = result.wasAcknowledged();
         } catch (Exception me) {
-            System.err.println("Unable to update due to an error: " + me);
+            log.error("Error while updating user permissions =>" + me);
+            throw new RaadoException("Network error please try after sometime.",
+                    ErrorCode.INTERNAL_ERROR);
         }
-
-
-//        BasicDBObject searchQuery = new BasicDBObject().append("phoneNo", phoneNo);
-//        User user = jacksonDBCollection.find(searchQuery).next();
-//        User user1 = new User(user);
-//        user1.setPermissions(permissions);
-//        final WriteResult writeResult = jacksonDBCollection.update(user, user1);
-//        return writeResult.getError() == null;
-        return true;
+        return successfulUpdate;
     }
 
     public List<User> getUsers() {
@@ -88,7 +87,6 @@ public class UserCommands {
         ArrayList<User> users = new ArrayList<>();
         try {
             while (cursor.hasNext()) {
-                //log.info(cursor.next().toJson());
                 users.add(objectMapper.readValue(cursor.next().toJson(), User.class));
             }
         } catch (IOException e) {
@@ -96,4 +94,33 @@ public class UserCommands {
         }
         return users;
     }
+
+    public User getUserById(final String userId) {
+        final List<User> allUsers = getUsers();
+        final User result = allUsers.stream()
+                .filter(user -> user.getUserId().equals(userId))
+                .findFirst().orElse(null);
+        if(Objects.isNull(result)) {
+            throw new RaadoException("User not present.",
+                    ErrorCode.INTERNAL_ERROR);
+        }
+        return result;
+    }
+
+    public User validateAuth(final String phoneNumber, final String password) {
+        final List<User> allUsers = getUsers();
+        final User result = allUsers.stream()
+                .filter(user -> user.getPhoneNo().equals(phoneNumber) && user.getPassword().equals(password))
+                .findFirst().orElse(null);
+        if(Objects.isNull(result)) {
+            throw new RaadoException("User Id or Password dose not match",
+                    ErrorCode.USERID_OR_PASSWORD_IS_INCORRECT);
+        }
+        return result;
+    }
 }
+
+
+//
+//    Bson updates = Updates.set("permissions", permissions);
+//    UpdateOptions options = new UpdateOptions().upsert(true);

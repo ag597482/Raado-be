@@ -8,12 +8,11 @@ import org.raado.models.TransactionStatus;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class TransactionService {
 
-    private TransactionCommands transactionCommands;
+    private final TransactionCommands transactionCommands;
 
     @Inject
     public TransactionService(final TransactionCommands transactionCommands) {
@@ -28,19 +27,14 @@ public class TransactionService {
         return transactionCommands.getTransactions();
     }
 
-    public boolean updateTransaction(final String transactionId, final Transaction transaction) {
-//        final Transaction transaction = getAllTransactions().stream()
-//                .filter(savedTransaction -> Objects.equals(savedTransaction.getTransactionId(), transactionId)).toList().
-//                get(0);
-//        if (transaction == null)
-//            return false;
-        return transactionCommands.updateTransaction(transactionId, transaction);
+    public boolean updateTransaction(final String transactionId, final TransactionStatus transactionStatus, final String comment) {
+        return transactionCommands.updateTransaction(transactionId, transactionStatus, comment);
     }
 
     public List<Transaction> getFilteredTransactions(final ProcessName fromProcess,
                                                      final ProcessName toProcess,
-                                                     final String fromUserPhone,
-                                                     final String toUserPhone,
+                                                     final String fromUserId,
+                                                     final String toUserId,
                                                      final TransactionStatus status) {
         List<Transaction> allTransactions = transactionCommands.getTransactions();
         List<Transaction> filteredTransactions = new ArrayList<>(allTransactions);
@@ -52,13 +46,13 @@ public class TransactionService {
             filteredTransactions = filteredTransactions.stream()
                     .filter(transaction -> transaction.getToProcess().equals(toProcess))
                     .collect(Collectors.toList());
-        if(fromUserPhone!=null && fromUserPhone.length()>0)
+        if(fromUserId!=null && fromUserId.length()>0)
             filteredTransactions = filteredTransactions.stream()
-                    .filter(transaction -> transaction.getFromUserPhone().equals(fromUserPhone))
+                    .filter(transaction -> transaction.getFromUserId().equals(fromUserId))
                     .collect(Collectors.toList());
-        if(toUserPhone!=null && toUserPhone.length()>0)
+        if(toUserId!=null && toUserId.length()>0)
             filteredTransactions = filteredTransactions.stream()
-                    .filter(transaction -> transaction.getToUserPhone().equals(toUserPhone))
+                    .filter(transaction -> transaction.getToUserId().equals(toUserId))
                     .collect(Collectors.toList());
         if(status != null)
             filteredTransactions = filteredTransactions.stream()

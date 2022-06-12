@@ -21,6 +21,9 @@ public class AppConfig extends Configuration {
     private String transactionCollectionName;
 
     @NotNull
+    private String staticResourceCollectionName;
+
+    @NotNull
     @Valid
     private SwaggerBundleConfiguration swagger = new SwaggerBundleConfiguration();
 

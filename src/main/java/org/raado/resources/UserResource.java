@@ -4,10 +4,10 @@ import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.inject.Inject;
-import com.sun.el.parser.BooleanNode;
 import io.swagger.annotations.Api;
 import org.raado.models.Permission;
 import org.raado.models.User;
+import org.raado.response.RaadoResponse;
 import org.raado.services.UserService;
 
 import javax.validation.Valid;
@@ -43,23 +43,43 @@ public class UserResource {
     @Consumes(value = MediaType.APPLICATION_JSON)
     @Timed
     @Path("/addUser")
-    public Boolean addUser(@Valid User user) {
-        return this.userService.addUser(user);
+    public RaadoResponse<User> addUser(@Valid User user) {
+        return RaadoResponse.<User>builder()
+                .success(true)
+                .data(this.userService.addUser(user))
+                .build();
     }
 
     @GET
     @Produces(value = MediaType.APPLICATION_JSON)
     @Timed
     @Path("/getUsers")
-    public List<User> getUsers() {
-        return userService.getAllUsers();
+    public RaadoResponse<List<User>> getUsers() {
+        return RaadoResponse.<List<User>>builder()
+                .success(true)
+                .data(userService.getAllUsers())
+                .build();
+    }
+
+    @GET
+    @Produces(value = MediaType.APPLICATION_JSON)
+    @Timed
+    @Path("/validateUser")
+    public RaadoResponse<User> validateUser(@QueryParam("phoneNo") String phoneNo, @QueryParam("password") String password) {
+        return RaadoResponse.<User>builder()
+                .success(true)
+                .data(userService.validateUser(phoneNo, password))
+                .build();
     }
 
     @PATCH
     @Consumes(value = MediaType.APPLICATION_JSON)
     @Timed
     @Path("/updatePermissions")
-    public Boolean updateUserPermissions(@QueryParam("phoneNo") String phoneNo, @Valid List<Permission> permissions) {
-        return userService.updateUserPermissions(phoneNo, permissions);
+    public RaadoResponse<Boolean> updateUserPermissions(@QueryParam("userId") String userId, @Valid List<Permission> permissions) {
+        return RaadoResponse.<Boolean>builder()
+                .success(true)
+                .data(userService.updateUserPermissions(userId, permissions))
+                .build();
     }
 }

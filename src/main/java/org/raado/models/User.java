@@ -1,17 +1,12 @@
 package org.raado.models;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.vz.mongodb.jackson.Id;
-import net.vz.mongodb.jackson.ObjectId;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
-
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -19,18 +14,21 @@ import java.util.UUID;
 @NoArgsConstructor
 public class User {
 
-
-    @JsonIgnore
-    @JsonProperty("_id")
-    private final String userId = UUID.randomUUID().toString();
-
+    @BsonProperty
+    private String userId;
+    @BsonProperty
     private String name;
+    @BsonProperty
     private String phoneNo;
+    @BsonProperty
     private String password;
+    @BsonProperty
     private boolean admin;
+    @BsonProperty
     private List<Permission> permissions;
 
     public User(User user) {
+        userId = user.getUserId();
         name = user.getName();
         phoneNo = user.getPhoneNo();
         password = user.getPassword();
