@@ -26,12 +26,13 @@ public class TransactionCommands {
     RaadoUtils<Transaction> raadoUtils;
 
     @Inject
-    public TransactionCommands(@Named("transactionCollectionName") final String transactionCollectionName, final MongoDatabase mdb) {
+    public TransactionCommands(@Named("transactionCollectionName") final String transactionCollectionName,
+                               final MongoDatabase mdb) {
         this.transactionCollection =  mdb.getCollection(transactionCollectionName);
         raadoUtils = new RaadoUtils<Transaction>();
     }
 
-    public boolean addTransaction(final Transaction transaction) {
+    public Transaction addTransaction(final Transaction transaction) {
         String transactionId = "TN" + UUID.randomUUID();
         TimeZone.setDefault(TimeZone.getTimeZone("IST"));
         transaction.setTransactionId(transactionId);
@@ -40,15 +41,18 @@ public class TransactionCommands {
             throw new RaadoException("Network error please try after sometime.",
                     ErrorCode.INTERNAL_ERROR);
         }
-        return true;
+        return transaction;
     }
 
-    public boolean updateTransaction(final String transactionId, final TransactionStatus transactionStatus, final String comment) {
+    public Transaction updateTransaction(final String transactionId,
+                                     final TransactionStatus transactionStatus,
+                                     final String comment) {
         final Document query = new Document().append("transactionId",  transactionId);
         boolean successfulUpdate = false;
+        final Transaction updatedTransaction;
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
-            final Transaction updatedTransaction = objectMapper.readValue(transactionCollection.find().filter(query).iterator().next().toJson(), Transaction.class);
+            updatedTransaction = objectMapper.readValue(transactionCollection.find().filter(query).iterator().next().toJson(), Transaction.class);
             TimeZone.setDefault(TimeZone.getTimeZone("IST"));
             updatedTransaction.setStatus(transactionStatus);
             updatedTransaction.setComment(comment);
@@ -60,7 +64,10 @@ public class TransactionCommands {
             throw new RaadoException("Network error please try after sometime.",
                     ErrorCode.INTERNAL_ERROR);
         }
-        return successfulUpdate;
+        if (successfulUpdate) {
+            return updatedTransaction;
+        }
+        return null;
     }
 
     public Transaction getTransactionById(final String transactionId) {

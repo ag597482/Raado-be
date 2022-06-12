@@ -13,6 +13,7 @@ import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @Path("/transaction")
 @Produces(MediaType.APPLICATION_JSON)

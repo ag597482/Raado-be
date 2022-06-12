@@ -3,6 +3,7 @@ package org.raado.services;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.raado.commands.LocalCacheCommands;
 import org.raado.commands.UserCommands;
 import org.raado.models.Permission;
 import org.raado.models.User;
@@ -14,24 +15,35 @@ import java.util.List;
 public class UserService {
     private final UserCommands userCommands;
 
+    private final LocalCacheCommands localCacheCommands;
+
     @Inject
-    public UserService(final UserCommands userCommands) {
+    public UserService(final UserCommands userCommands,
+                       final LocalCacheCommands localCacheCommands) {
         this.userCommands = userCommands;
+        this.localCacheCommands = localCacheCommands;
     }
 
-    public User addUser(User user) {
-         return userCommands.addUser(user);
+    public User addUser(final User user) {
+         final User newUser = userCommands.addUser(user);
+         localCacheCommands.refreshUsersCache(newUser);
+         return newUser;
     }
 
     public boolean updateUserPermissions(String userId, List<Permission> permissions) {
-        return userCommands.updateUserPermissions(userId, permissions);
+        boolean isSuccess = userCommands.updateUserPermissions(userId, permissions);
+        if (isSuccess) {
+            localCacheCommands.getAllUsers().get(userId).setPermissions(permissions);
+        }
+        return isSuccess;
     }
 
     public List<User> getAllUsers() {
-        return userCommands.getUsers();
+        return localCacheCommands.getAllUsers().values().stream().toList();
+        //userCommands.getUsers();
     }
 
-    public User validateUser(String phoneNo, String password) {
+    public User validateUser(final String phoneNo, final String password) {
         return userCommands.validateAuth(phoneNo, password);
     }
 }

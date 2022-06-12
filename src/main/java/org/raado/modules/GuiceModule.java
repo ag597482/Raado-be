@@ -12,6 +12,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import lombok.extern.slf4j.Slf4j;
 import org.raado.AppConfig;
+import org.raado.configs.CacheConfig;
 import org.raado.configs.MongoConfig;
 
 import javax.inject.Named;
@@ -69,5 +70,11 @@ public class GuiceModule extends AbstractModule {
     @Named("staticResourceCollectionName")
     public String providesStaticResourceName(AppConfig appConfig) {
         return appConfig.getTransactionCollectionName();
+    }
+
+    @Provides
+    @Singleton
+    public CacheConfig providesCacheConfig(AppConfig appConfig) {
+        return appConfig.getCacheConfig();
     }
 }

@@ -34,3 +34,9 @@ swagger:
 mongoConfig:
   mongohost: 127.0.0.1
   mongodbName: inventory
+
+cacheConfig:
+  concurrency: 32
+  expiryInMinutes: 90
+  maxElements: 1024
+  refreshInMinutes: 60

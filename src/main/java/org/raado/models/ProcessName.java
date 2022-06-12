@@ -8,5 +8,5 @@ public enum ProcessName {
     SIZING_AND_POLISHING,
     SORTING,
     PRODUCT,
-    WAREHOUSE;
+    WAREHOUSE
 }

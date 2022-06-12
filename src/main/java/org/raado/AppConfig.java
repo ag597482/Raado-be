@@ -3,6 +3,7 @@ package org.raado;
 import io.dropwizard.Configuration;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import lombok.Data;
+import org.raado.configs.CacheConfig;
 import org.raado.configs.MongoConfig;
 
 import javax.validation.Valid;
@@ -30,4 +31,8 @@ public class AppConfig extends Configuration {
     @NotNull
     @Valid
     private MongoConfig mongoConfig;
+
+    @NotNull
+    @Valid
+    private CacheConfig cacheConfig;
 }
