@@ -68,12 +68,13 @@ public class TransactionResource {
     @Path("/getFilteredTransactions")
     public RaadoResponse<List<Transaction>> getFilteredTransactions(@QueryParam("fromProcess") ProcessName fromProcess,
                                                      @QueryParam("toProcess")  ProcessName toProcess,
+                                                     @QueryParam("commonProcess")  ProcessName commonProcess,
                                                      @QueryParam("fromUserId") String fromUserId,
                                                      @QueryParam("toUserId") String toUserId,
                                                      @QueryParam("status") TransactionStatus status) {
         return RaadoResponse.<List<Transaction>>builder()
                 .success(true)
-                .data(transactionService.getFilteredTransactions(fromProcess, toProcess, fromUserId, toUserId, status))
+                .data(transactionService.getFilteredTransactions(fromProcess, toProcess, commonProcess,fromUserId, toUserId, status))
                 .build();
     }
 }
