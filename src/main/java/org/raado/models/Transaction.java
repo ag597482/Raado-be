@@ -34,4 +34,6 @@ public class Transaction {
     private String fromUserId;
     @BsonProperty
     private String toUserId;
+    private String fromUserName;
+    private String toUserName;
 }

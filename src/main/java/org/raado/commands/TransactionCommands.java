@@ -12,8 +12,7 @@ import org.bson.Document;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.raado.exceptions.ErrorCode;
 import org.raado.exceptions.RaadoException;
-import org.raado.models.Transaction;
-import org.raado.models.TransactionStatus;
+import org.raado.models.*;
 import org.raado.utils.RaadoUtils;
 
 import java.io.IOException;
@@ -25,9 +24,13 @@ public class TransactionCommands {
     private final MongoCollection<Document> transactionCollection;
     RaadoUtils<Transaction> raadoUtils;
 
+    private final UserCommands userCommands;
+
     @Inject
     public TransactionCommands(@Named("transactionCollectionName") final String transactionCollectionName,
-                               final MongoDatabase mdb) {
+                               final MongoDatabase mdb,
+                               final UserCommands userCommands) {
+        this.userCommands = userCommands;
         this.transactionCollection =  mdb.getCollection(transactionCollectionName);
         raadoUtils = new RaadoUtils<Transaction>();
     }
@@ -35,6 +38,7 @@ public class TransactionCommands {
     public Transaction addTransaction(final Transaction transaction) {
         String transactionId = "TN" + UUID.randomUUID();
         TimeZone.setDefault(TimeZone.getTimeZone("IST"));
+        validateTransaction(transaction);
         transaction.setTransactionId(transactionId);
         transaction.setTimeOfTransaction(new Date());
         if(!transactionCollection.insertOne(raadoUtils.convertToDocument(transaction)).wasAcknowledged()) {
@@ -95,5 +99,30 @@ public class TransactionCommands {
             log.error("Error converting json to JAVA" , e);
         }
         return transactions;
+    }
+
+    private void validateTransaction(final Transaction transaction) {
+        if (transaction.getFromProcess() == transaction.getToProcess()) {
+            throw new RaadoException("FROM process can't be TO process.",
+                    ErrorCode.INTERNAL_ERROR);
+        }
+        if (Objects.equals(transaction.getFromUserId(), transaction.getToUserId())) {
+            throw new RaadoException("FROM user can't be TO user.",
+                    ErrorCode.INTERNAL_ERROR);
+        }
+        User fromUser = userCommands.getUserById(transaction.getFromUserId());
+        User toUser = userCommands.getUserById(transaction.getToUserId());
+        if (validateUserPermissions(fromUser, transaction.getFromProcess()) && validateUserPermissions(toUser, transaction.getToProcess())) {
+            transaction.setFromUserName(fromUser.getName());
+            transaction.setToUserName(toUser.getName());
+            return;
+        }
+        throw new RaadoException("Users don't have write permissions.",
+                ErrorCode.PERMISSIONS_ACCESS_ISSUE);
+    }
+
+    private boolean validateUserPermissions(final User user, final ProcessName processName) {
+        Optional<Permission> userPermission = user.getPermissions().stream().filter(permission -> permission.getProcessName().equals(processName)).findFirst();
+        return userPermission.isPresent() && userPermission.get().isWrite();
     }
 }

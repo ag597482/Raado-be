@@ -13,6 +13,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.raado.exceptions.ErrorCode;
 import org.raado.exceptions.RaadoException;
 import org.raado.models.Permission;
+import org.raado.models.ProcessName;
 import org.raado.models.User;
 import org.raado.utils.RaadoUtils;
 
@@ -44,6 +45,16 @@ public class UserCommands {
         }
         if (!user.isAdmin()) {
             user.setPermissions(new ArrayList<>());
+        }
+        else {
+            List<Permission> allPermissions = new ArrayList<>();
+            for(ProcessName processName : ProcessName.values()) {
+                Permission p = new Permission();
+                p.setProcessName(processName);
+                p.setWrite(true);
+                allPermissions.add(p);
+            }
+            user.setPermissions(allPermissions);
         }
         String userId = "UR" + UUID.randomUUID();
         user.setUserId(userId);
@@ -96,15 +107,19 @@ public class UserCommands {
     }
 
     public User getUserById(final String userId) {
-        final List<User> allUsers = getUsers();
-        final User result = allUsers.stream()
-                .filter(user -> user.getUserId().equals(userId))
-                .findFirst().orElse(null);
-        if(Objects.isNull(result)) {
-            throw new RaadoException("User not present.",
+        final Document query = new Document().append("userId", userId);
+        final ObjectMapper objectMapper = new ObjectMapper();
+        User user = null;
+        try {
+            user = objectMapper.readValue(userCollection.find(query).iterator().next().toJson(), User.class);
+        } catch (IOException e) {
+            log.error("Error converting json to JAVA" , e);
+        }
+        if(Objects.isNull(user)) {
+            throw new RaadoException("User not present for userId : " + userId,
                     ErrorCode.INTERNAL_ERROR);
         }
-        return result;
+        return user;
     }
 
     public User validateAuth(final String phoneNumber, final String password) {
