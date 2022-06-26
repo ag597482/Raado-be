@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
+import lombok.NonNull;
+import org.raado.exceptions.ErrorCode;
+import org.raado.exceptions.RaadoException;
 import org.raado.models.Permission;
 import org.raado.models.User;
 import org.raado.response.RaadoResponse;
@@ -44,6 +47,10 @@ public class UserResource {
     @Timed
     @Path("/addUser")
     public RaadoResponse<User> addUser(@Valid User user) {
+        if (Objects.isNull(user.getName()) || Objects.isNull(user.getPassword()) || Objects.isNull(user.getPhoneNo())) {
+            throw new RaadoException("name, password, phone Number can not be null",
+                    ErrorCode.CANNOT_BE_NULL);
+        }
         return RaadoResponse.<User>builder()
                 .success(true)
                 .data(this.userService.addUser(user))
@@ -66,6 +73,10 @@ public class UserResource {
     @Timed
     @Path("/validateUser")
     public RaadoResponse<User> validateUser(@QueryParam("phoneNo") String phoneNo, @QueryParam("password") String password) {
+        if (Objects.isNull(password) || Objects.isNull(phoneNo)) {
+            throw new RaadoException("phoneNo and Password can not be null",
+                    ErrorCode.CANNOT_BE_NULL);
+        }
         return RaadoResponse.<User>builder()
                 .success(true)
                 .data(userService.validateUser(phoneNo, password))
@@ -77,6 +88,10 @@ public class UserResource {
     @Timed
     @Path("/updatePermissions")
     public RaadoResponse<Boolean> updateUserPermissions(@QueryParam("userId") String userId, @Valid List<Permission> permissions) {
+        if (Objects.isNull(userId)) {
+            throw new RaadoException("userId can not be null",
+                    ErrorCode.CANNOT_BE_NULL);
+        }
         return RaadoResponse.<Boolean>builder()
                 .success(true)
                 .data(userService.updateUserPermissions(userId, permissions))

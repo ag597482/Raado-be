@@ -3,6 +3,7 @@ package org.raado.models;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
@@ -16,10 +17,13 @@ public class User {
 
     @BsonProperty
     private String userId;
+    @NonNull
     @BsonProperty
     private String name;
+    @NonNull
     @BsonProperty
     private String phoneNo;
+    @NonNull
     @BsonProperty
     private String password;
     @BsonProperty

@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -77,12 +76,28 @@ public class LocalCacheCommands implements Managed {
         transactionsCache.put(ALL_TRANSACTIONS, CompletableFuture.completedFuture(cachedTransactions));
     }
 
+    public void hardRefreshCache() {
+        usersCache = Caffeine.newBuilder()
+                .maximumSize(cacheConfig.getMaxElements())
+                .buildAsync(key -> {
+                    log.info("Loading data for users");
+                    return userCommands.getUsers().stream()
+                            .collect(Collectors.toMap(User::getUserId, x->x));
+                });
+        transactionsCache = Caffeine.newBuilder()
+                .maximumSize(cacheConfig.getMaxElements())
+                .buildAsync(key -> {
+                    log.info("Loading data for transactions");
+                    return transactionCommands.getTransactions().stream()
+                            .collect(Collectors.toMap(Transaction::getTransactionId, x->x));
+                });
+    }
+
     @Override
     public void start() throws Exception {
         log.info("Initializing local cache with config {}", cacheConfig);
         usersCache = Caffeine.newBuilder()
                 .maximumSize(cacheConfig.getMaxElements())
-                .refreshAfterWrite(cacheConfig.getRefreshInMinutes(), TimeUnit.MINUTES)
                 .buildAsync(key -> {
                     log.info("Loading data for users");
                     return userCommands.getUsers().stream()
@@ -92,7 +107,6 @@ public class LocalCacheCommands implements Managed {
 
         transactionsCache = Caffeine.newBuilder()
                 .maximumSize(cacheConfig.getMaxElements())
-                .refreshAfterWrite(cacheConfig.getRefreshInMinutes(), TimeUnit.MINUTES)
                 .buildAsync(key -> {
                     log.info("Loading data for transactions");
                     return transactionCommands.getTransactions().stream()

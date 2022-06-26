@@ -41,6 +41,7 @@ public class TransactionCommands {
         validateTransaction(transaction);
         transaction.setTransactionId(transactionId);
         transaction.setTimeOfTransaction(new Date());
+        transaction.setAmount(calculateAmount(transaction.getEntries(), transaction.getFromProcess(), userCommands.getUserById(transaction.getFromUserId())));
         if(!transactionCollection.insertOne(raadoUtils.convertToDocument(transaction)).wasAcknowledged()) {
             throw new RaadoException("Network error please try after sometime.",
                     ErrorCode.INTERNAL_ERROR);
@@ -91,6 +92,7 @@ public class TransactionCommands {
         final FindIterable<Document> iterable = transactionCollection.find();
         MongoCursor<Document> cursor = iterable.iterator();
         ArrayList<Transaction> transactions = new ArrayList<>();
+        System.out.println("Getting the transaction's for the db");
         try {
             while (cursor.hasNext()) {
                 transactions.add(objectMapper.readValue(cursor.next().toJson(), Transaction.class));
@@ -99,6 +101,24 @@ public class TransactionCommands {
             log.error("Error converting json to JAVA" , e);
         }
         return transactions;
+    }
+
+    private int calculateAmount(Map<String, Integer> entries, ProcessName fromProcess, User fromUser) {
+        final int[] sum = {0};
+        Permission userPermission = fromUser.getPermissions().stream()
+                .filter(permission -> permission.getProcessName() == fromProcess)
+                .findFirst().orElse(null);
+        if(Objects.nonNull(userPermission)) {
+            Map<String, Integer> rate = userPermission.getEntriesRate();
+            if(Objects.nonNull(rate)) {
+                entries.forEach((k,v) -> {
+                    if(rate.containsKey(k)) {
+                        sum[0] = sum[0] + (rate.get(k) * v);
+                    }
+                });
+            }
+        }
+        return sum[0];
     }
 
     private void validateTransaction(final Transaction transaction) {
@@ -122,7 +142,7 @@ public class TransactionCommands {
     }
 
     private boolean validateUserPermissions(final User user, final ProcessName processName) {
-        Optional<Permission> userPermission = user.getPermissions().stream().filter(permission -> permission.getProcessName().equals(processName)).findFirst();
+        final Optional<Permission> userPermission = user.getPermissions().stream().filter(permission -> permission.getProcessName().equals(processName)).findFirst();
         return userPermission.isPresent() && userPermission.get().isWrite();
     }
 }

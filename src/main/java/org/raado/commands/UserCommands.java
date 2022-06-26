@@ -94,7 +94,7 @@ public class UserCommands {
         final ObjectMapper objectMapper = new ObjectMapper();
         final FindIterable<Document> iterable = userCollection.find();
         MongoCursor<Document> cursor = iterable.iterator();
-        System.out.println("Student list with a cursor: ");
+        System.out.println("Getting the user's for the db");
         ArrayList<User> users = new ArrayList<>();
         try {
             while (cursor.hasNext()) {
