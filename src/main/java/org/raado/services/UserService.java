@@ -5,10 +5,15 @@ import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.raado.commands.LocalCacheCommands;
 import org.raado.commands.UserCommands;
+import org.raado.exceptions.ErrorCode;
+import org.raado.exceptions.RaadoException;
 import org.raado.models.Permission;
+import org.raado.models.ProcessName;
 import org.raado.models.User;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Singleton
@@ -31,11 +36,27 @@ public class UserService {
     }
 
     public boolean updateUserPermissions(String userId, List<Permission> permissions) {
-        boolean isSuccess = userCommands.updateUserPermissions(userId, permissions);
-        if (isSuccess) {
-            localCacheCommands.getAllUsers().get(userId).setPermissions(permissions);
+        List<Permission> updateUserPermissions = userCommands.updateUserPermissions(userId, permissions);
+        if (Objects.nonNull(updateUserPermissions)) {
+            localCacheCommands.getAllUsers().get(userId).setPermissions(updateUserPermissions);
         }
-        return isSuccess;
+        return Objects.nonNull(updateUserPermissions);
+    }
+
+    public boolean updateUserProcessRate(String userId, ProcessName processName, Map<String, Integer> entriesRate) {
+        Permission processPermission = getUserById(userId).getPermissions().stream()
+                .filter(permission -> permission.getProcessName().equals(processName) && permission.isWrite())
+                .findFirst().orElse(null);
+        if (processPermission == null) {
+            throw new RaadoException("Please provide write process for permissions to set the rate.",
+                    ErrorCode.INTERNAL_ERROR);
+        }
+        processPermission.setEntriesRate(entriesRate);
+        List<Permission> updateUserPermissions = userCommands.updateUserPermissionRate(userId, processPermission);
+        if (Objects.nonNull(updateUserPermissions)) {
+            localCacheCommands.getAllUsers().get(userId).setPermissions(updateUserPermissions);
+        }
+        return Objects.nonNull(updateUserPermissions);
     }
 
     public List<User> getAllUsers() {
@@ -45,5 +66,9 @@ public class UserService {
 
     public User validateUser(final String phoneNo, final String password) {
         return userCommands.validateAuth(phoneNo, password);
+    }
+
+    public User getUserById(final String userId) {
+        return localCacheCommands.getAllUsers().get(userId);
     }
 }

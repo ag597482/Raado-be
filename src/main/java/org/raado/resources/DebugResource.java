@@ -3,6 +3,7 @@ package org.raado.resources;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import org.raado.commands.LocalCacheCommands;
+import org.raado.commands.StaticCommands;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -16,9 +17,12 @@ public class DebugResource {
 
     private final LocalCacheCommands localCacheCommands;
 
+    private final StaticCommands staticCommands;
+
     @Inject
-    public DebugResource(final LocalCacheCommands localCacheCommands){
+    public DebugResource(final LocalCacheCommands localCacheCommands, StaticCommands staticCommands){
         this.localCacheCommands = localCacheCommands;
+        this.staticCommands = staticCommands;
     }
 
     @GET
@@ -27,5 +31,19 @@ public class DebugResource {
     public boolean refreshCache() {
         localCacheCommands.hardRefreshCache();
         return true;
+    }
+
+    @GET
+    @Path("/initializeGlobalRates")
+    @Produces(MediaType.APPLICATION_JSON)
+    public boolean initializeGlobalRates() {
+        return staticCommands.initializeGlobalRates();
+    }
+
+    @GET
+    @Path("/initializeProcessEntries")
+    @Produces(MediaType.APPLICATION_JSON)
+    public boolean initializeProcessEntries() {
+        return staticCommands.initializeProcessEntries();
     }
 }

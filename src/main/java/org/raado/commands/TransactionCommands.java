@@ -22,17 +22,19 @@ import java.util.*;
 public class TransactionCommands {
 
     private final MongoCollection<Document> transactionCollection;
-    RaadoUtils<Transaction> raadoUtils;
 
     private final UserCommands userCommands;
+
+    private final StaticCommands staticCommands;
 
     @Inject
     public TransactionCommands(@Named("transactionCollectionName") final String transactionCollectionName,
                                final MongoDatabase mdb,
-                               final UserCommands userCommands) {
+                               final UserCommands userCommands,
+                               StaticCommands staticCommands) {
         this.userCommands = userCommands;
+        this.staticCommands = staticCommands;
         this.transactionCollection =  mdb.getCollection(transactionCollectionName);
-        raadoUtils = new RaadoUtils<Transaction>();
     }
 
     public Transaction addTransaction(final Transaction transaction) {
@@ -42,7 +44,7 @@ public class TransactionCommands {
         transaction.setTransactionId(transactionId);
         transaction.setTimeOfTransaction(new Date());
         transaction.setAmount(calculateAmount(transaction.getEntries(), transaction.getFromProcess(), userCommands.getUserById(transaction.getFromUserId())));
-        if(!transactionCollection.insertOne(raadoUtils.convertToDocument(transaction)).wasAcknowledged()) {
+        if(!transactionCollection.insertOne(Objects.requireNonNull(RaadoUtils.<Transaction>convertToDocument(transaction))).wasAcknowledged()) {
             throw new RaadoException("Network error please try after sometime.",
                     ErrorCode.INTERNAL_ERROR);
         }
@@ -62,7 +64,7 @@ public class TransactionCommands {
             updatedTransaction.setStatus(transactionStatus);
             updatedTransaction.setComment(comment);
             updatedTransaction.setTimeOfApproval(new Date());
-            UpdateResult result = transactionCollection.replaceOne(query, raadoUtils.convertToDocument(updatedTransaction));
+            UpdateResult result = transactionCollection.replaceOne(query, Objects.requireNonNull(RaadoUtils.<Transaction>convertToDocument(updatedTransaction)));
             successfulUpdate = result.wasAcknowledged();
         } catch (Exception me) {
             log.error("Error while updating user permissions =>" + me);
@@ -110,10 +112,18 @@ public class TransactionCommands {
                 .findFirst().orElse(null);
         if(Objects.nonNull(userPermission)) {
             Map<String, Integer> rate = userPermission.getEntriesRate();
-            if(Objects.nonNull(rate)) {
+            Map<String, Integer> globalRate = staticCommands.getGlobalRates().get(fromProcess);
+            if(Objects.nonNull(rate) && rate.size()==0) {
                 entries.forEach((k,v) -> {
                     if(rate.containsKey(k)) {
                         sum[0] = sum[0] + (rate.get(k) * v);
+                    }
+                });
+            }
+            else {
+                entries.forEach((k,v) -> {
+                    if(globalRate.containsKey(k)) {
+                        sum[0] = sum[0] + (globalRate.get(k) * v);
                     }
                 });
             }

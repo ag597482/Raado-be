@@ -18,10 +18,7 @@ import org.raado.models.User;
 import org.raado.utils.RaadoUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 
 @Slf4j
@@ -29,12 +26,9 @@ public class UserCommands {
 
     private final MongoCollection<Document> userCollection;
 
-    RaadoUtils<User> raadoUtils;
-
     @Inject
     public UserCommands(@Named("userCollectionName") final String userCollectionName, final MongoDatabase mdb) {
         this.userCollection = mdb.getCollection(userCollectionName);
-        raadoUtils = new RaadoUtils<User>();
     }
 
     public User addUser(final User user) {
@@ -52,13 +46,14 @@ public class UserCommands {
                 Permission p = new Permission();
                 p.setProcessName(processName);
                 p.setWrite(true);
+                p.setEntriesRate(new HashMap<>());
                 allPermissions.add(p);
             }
             user.setPermissions(allPermissions);
         }
         String userId = "UR" + UUID.randomUUID();
         user.setUserId(userId);
-        if(userCollection.insertOne(raadoUtils.convertToDocument(user)).wasAcknowledged()) {
+        if(userCollection.insertOne(Objects.requireNonNull(RaadoUtils.<User>convertToDocument(user))).wasAcknowledged()) {
             return getUserById(userId);
         }
         throw new RaadoException("Network error please try after sometime.",
@@ -72,22 +67,61 @@ public class UserCommands {
         return samePhoneNumber.size() <= 0;
     }
 
-    public boolean updateUserPermissions(final String userId, final List<Permission> permissions) {
+    public List<Permission> updateUserPermissions(final String userId, final List<Permission> permissions) {
         final Document query = new Document().append("userId",  userId);
         boolean successfulUpdate = false;
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
             final User user = objectMapper.readValue(userCollection.find(query).iterator().next().toJson(), User.class);
+            List<Permission> oldPermissions = user.getPermissions();
+            Map<ProcessName, Map<String, Integer>> processWiseRates = new HashMap<>();
+            oldPermissions.forEach(permission ->
+                            processWiseRates.put(permission.getProcessName(), permission.getEntriesRate()));
             final User updatedUser = new User(user);
+            permissions.forEach(permission -> {
+                        Map<String, Integer> processRate = processWiseRates.containsKey(permission.getProcessName())
+                                ? processWiseRates.get(permission.getProcessName()) : new HashMap<>();
+                         permission.setEntriesRate(processRate);
+                    });
             updatedUser.setPermissions(permissions);
-            UpdateResult result = userCollection.replaceOne(query, raadoUtils.convertToDocument(updatedUser));
+            UpdateResult result = userCollection.replaceOne(query, Objects.requireNonNull(RaadoUtils.<User>convertToDocument(updatedUser)));
             successfulUpdate = result.wasAcknowledged();
+            if(!successfulUpdate)
+                return null;
         } catch (Exception me) {
             log.error("Error while updating user permissions =>" + me);
             throw new RaadoException("Network error please try after sometime.",
                     ErrorCode.INTERNAL_ERROR);
         }
-        return successfulUpdate;
+        return permissions;
+    }
+
+    public List<Permission> updateUserPermissionRate(String userId, Permission processPermission) {
+        final Document query = new Document().append("userId",  userId);
+        List<Permission> oldPermissions;
+        boolean successfulUpdate;
+        try {
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final User user = objectMapper.readValue(userCollection.find(query).iterator().next().toJson(), User.class);
+            oldPermissions = user.getPermissions();
+            oldPermissions
+                    .forEach(permission -> {
+                        if (permission.getProcessName().equals(processPermission.getProcessName())) {
+                            permission.setEntriesRate(processPermission.getEntriesRate());
+                        }
+                    });
+            final User updatedUser = new User(user);
+            updatedUser.setPermissions(oldPermissions);
+            UpdateResult result = userCollection.replaceOne(query, Objects.requireNonNull(RaadoUtils.<User>convertToDocument(updatedUser)));
+            successfulUpdate = result.wasAcknowledged();
+            if(!successfulUpdate)
+                return null;
+        } catch (Exception me) {
+            log.error("Error while updating user permissions =>" + me);
+            throw new RaadoException("Network error please try after sometime.",
+                    ErrorCode.INTERNAL_ERROR);
+        }
+        return oldPermissions;
     }
 
     public List<User> getUsers() {

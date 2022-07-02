@@ -24,7 +24,7 @@ userCollectionName: raado-users
 
 transactionCollectionName: raado-transactions
 
-staticResourceCollectionName: raado-resource
+staticResourceCollectionName: raado-static-resources
 
 swagger:
   resourcePackage: org.raado.resources

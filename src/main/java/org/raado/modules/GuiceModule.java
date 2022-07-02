@@ -69,7 +69,7 @@ public class GuiceModule extends AbstractModule {
     @Singleton
     @Named("staticResourceCollectionName")
     public String providesStaticResourceName(AppConfig appConfig) {
-        return appConfig.getTransactionCollectionName();
+        return appConfig.getStaticResourceCollectionName();
     }
 
     @Provides

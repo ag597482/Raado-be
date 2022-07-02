@@ -9,9 +9,9 @@ import java.io.IOException;
 
 @Slf4j
 @NoArgsConstructor
-public class RaadoUtils<T> {
+public class RaadoUtils {
 
-    public Document convertToDocument(T parentClass) {
+    public static <T> Document convertToDocument(T parentClass) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             String jsonString = objectMapper.writeValueAsString(parentClass);

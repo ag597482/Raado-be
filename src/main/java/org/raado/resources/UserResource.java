@@ -9,6 +9,7 @@ import lombok.NonNull;
 import org.raado.exceptions.ErrorCode;
 import org.raado.exceptions.RaadoException;
 import org.raado.models.Permission;
+import org.raado.models.ProcessName;
 import org.raado.models.User;
 import org.raado.response.RaadoResponse;
 import org.raado.services.UserService;
@@ -17,6 +18,7 @@ import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 
@@ -71,6 +73,21 @@ public class UserResource {
     @GET
     @Produces(value = MediaType.APPLICATION_JSON)
     @Timed
+    @Path("/getUserById")
+    public RaadoResponse<User> getUserById(@QueryParam("userId") String userId) {
+        if (Objects.isNull(userId)) {
+            throw new RaadoException("userId can not be null",
+                    ErrorCode.CANNOT_BE_NULL);
+        }
+        return RaadoResponse.<User>builder()
+                .success(true)
+                .data(userService.getUserById(userId))
+                .build();
+    }
+
+    @GET
+    @Produces(value = MediaType.APPLICATION_JSON)
+    @Timed
     @Path("/validateUser")
     public RaadoResponse<User> validateUser(@QueryParam("phoneNo") String phoneNo, @QueryParam("password") String password) {
         if (Objects.isNull(password) || Objects.isNull(phoneNo)) {
@@ -95,6 +112,21 @@ public class UserResource {
         return RaadoResponse.<Boolean>builder()
                 .success(true)
                 .data(userService.updateUserPermissions(userId, permissions))
+                .build();
+    }
+
+    @PATCH
+    @Consumes(value = MediaType.APPLICATION_JSON)
+    @Timed
+    @Path("/{processName}/updateUserRate")
+    public RaadoResponse<Boolean> updateUserProcessRate(@PathParam("processName") ProcessName processName, @QueryParam("userId") String userId, @Valid Map<String, Integer> entriesRate) {
+        if (Objects.isNull(userId) || Objects.isNull(entriesRate)) {
+            throw new RaadoException("userId and it's entries can not be null",
+                    ErrorCode.CANNOT_BE_NULL);
+        }
+        return RaadoResponse.<Boolean>builder()
+                .success(true)
+                .data(userService.updateUserProcessRate(userId, processName, entriesRate))
                 .build();
     }
 }
