@@ -5,6 +5,7 @@ import com.google.inject.name.Named;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
+import com.mongodb.client.result.UpdateResult;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -60,18 +61,26 @@ public class StaticCommands {
     }
 
     public boolean initializeGlobalRates() {
+        final Document query = new Document().append("namespace", Constants.GLOBAL_RATES);
         Map<ProcessName, Map<String, Integer>> initialGlobalRates = new HashMap<>();
         Arrays.stream(ProcessName.values()).sequential()
                 .forEach(processName -> initialGlobalRates.put(processName, new HashMap<>()));
         StaticRates globalRates = StaticRates.builder().namespace(Constants.GLOBAL_RATES).rates(initialGlobalRates).build();
+        UpdateResult updateResult = staticResourcesCollection.replaceOne(query, Objects.requireNonNull(RaadoUtils.<StaticRates>convertToDocument(globalRates)));
+        if (updateResult.getMatchedCount() != 0)
+        return updateResult.wasAcknowledged();
         return staticResourcesCollection.insertOne(Objects.requireNonNull(RaadoUtils.<StaticRates>convertToDocument(globalRates))).wasAcknowledged();
     }
 
     public boolean initializeProcessEntries() {
+        final Document query = new Document().append("namespace", Constants.PROCESS_ENTRIES);
         Map<ProcessName, ArrayList<String>> processWiseEntries = new HashMap<>();
         Arrays.stream(ProcessName.values()).sequential()
                 .forEach(processName -> processWiseEntries.put(processName, new ArrayList<>()));
         ProcessEntries processEntries = ProcessEntries.builder().namespace(Constants.PROCESS_ENTRIES).processWiseEntries(processWiseEntries).build();
+        UpdateResult updateResult = staticResourcesCollection.replaceOne(query, Objects.requireNonNull(RaadoUtils.<ProcessEntries>convertToDocument(processEntries)));
+        if (updateResult.getMatchedCount() != 0)
+            return updateResult.wasAcknowledged();
         return staticResourcesCollection.insertOne(Objects.requireNonNull(RaadoUtils.<ProcessEntries>convertToDocument(processEntries))).wasAcknowledged();
     }
 
