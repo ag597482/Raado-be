@@ -5,9 +5,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
-import lombok.NonNull;
+import org.raado.commands.StaticCommands;
 import org.raado.exceptions.ErrorCode;
 import org.raado.exceptions.RaadoException;
+import org.raado.models.Constants;
 import org.raado.models.Permission;
 import org.raado.models.ProcessName;
 import org.raado.models.User;
@@ -30,10 +31,13 @@ public class UserResource {
 
     private final UserService userService;
 
+    private final StaticCommands staticCommands;
+
     @Inject
-    public UserResource(final String defaultName, final UserService userService) {
+    public UserResource(final String defaultName, final UserService userService, StaticCommands staticCommands) {
         this.defaultName = defaultName;
         this.userService = userService;
+        this.staticCommands = staticCommands;
     }
 
     @GET
@@ -74,14 +78,14 @@ public class UserResource {
     @Produces(value = MediaType.APPLICATION_JSON)
     @Timed
     @Path("/getUserById")
-    public RaadoResponse<User> getUserById(@QueryParam("userId") String userId) {
-        if (Objects.isNull(userId)) {
-            throw new RaadoException("userId can not be null",
+    public RaadoResponse<User> getUserById(@QueryParam("userId") String userId, @QueryParam("phoneNo") String phoneNo) {
+        if (Objects.isNull(userId) && Objects.isNull(phoneNo)) {
+            throw new RaadoException("userId and phoneNO. both can not be null",
                     ErrorCode.CANNOT_BE_NULL);
         }
         return RaadoResponse.<User>builder()
                 .success(true)
-                .data(userService.getUserById(userId))
+                .data(userService.getUserByIdOrPhoneNo(userId, phoneNo))
                 .build();
     }
 
@@ -123,6 +127,12 @@ public class UserResource {
         if (Objects.isNull(userId) || Objects.isNull(entriesRate)) {
             throw new RaadoException("userId and it's entries can not be null",
                     ErrorCode.CANNOT_BE_NULL);
+        }
+        if(userId.equals(Constants.GLOBAL_RATES)) {
+            return RaadoResponse.<Boolean>builder()
+                    .success(true)
+                    .data(staticCommands.updateGlobalRate(Constants.GLOBAL_RATES, processName, entriesRate))
+                    .build();
         }
         return RaadoResponse.<Boolean>builder()
                 .success(true)

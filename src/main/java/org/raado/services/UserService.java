@@ -44,7 +44,7 @@ public class UserService {
     }
 
     public boolean updateUserProcessRate(String userId, ProcessName processName, Map<String, Integer> entriesRate) {
-        Permission processPermission = getUserById(userId).getPermissions().stream()
+        Permission processPermission = getUserByIdOrPhoneNo(userId, null).getPermissions().stream()
                 .filter(permission -> permission.getProcessName().equals(processName) && permission.isWrite())
                 .findFirst().orElse(null);
         if (processPermission == null) {
@@ -68,7 +68,20 @@ public class UserService {
         return userCommands.validateAuth(phoneNo, password);
     }
 
-    public User getUserById(final String userId) {
-        return localCacheCommands.getAllUsers().get(userId);
+    public User getUserByIdOrPhoneNo(final String userId, final String phoneNo) {
+        User user = null;
+        if (Objects.nonNull(userId))
+            user = localCacheCommands.getAllUsers().get(userId);
+        else
+            user = localCacheCommands.getAllUsers().values()
+                    .stream()
+                    .filter(savedUser -> savedUser.getPhoneNo().equals(phoneNo))
+                    .findFirst()
+                    .orElse(null);
+        if (Objects.isNull(user)) {
+            throw new RaadoException("User with give phone no. or userId is not present!",
+                    ErrorCode.USER_NOT_FOUND);
+        }
+        return user;
     }
 }

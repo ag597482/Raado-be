@@ -55,19 +55,15 @@ public class StaticResource {
     @PATCH
     @Consumes(value = MediaType.APPLICATION_JSON)
     @Timed
-    @Path("/{processName}/updateUserRate")
-    public RaadoResponse<Boolean> updateUserProcessRate(@PathParam("processName") ProcessName processName, @QueryParam("userId") String userId, @Valid Map<String, Integer> entriesRate) {
-        if (Objects.isNull(userId) || Objects.isNull(entriesRate)) {
-            throw new RaadoException("userId and it's entries can not be null",
+    @Path("/{processName}/updateGlobalRate")
+    public RaadoResponse<Boolean> updateUserProcessRate(@PathParam("processName") ProcessName processName, @Valid Map<String, Integer> entriesRate) {
+        if (Objects.isNull(entriesRate)) {
+            throw new RaadoException("entries can not be null",
                     ErrorCode.CANNOT_BE_NULL);
-        }
-        if (!userId.equals(Constants.GLOBAL_RATES)) {
-            throw new RaadoException("userId should be GLOBAL for static resources",
-                    ErrorCode.INTERNAL_ERROR);
         }
         return RaadoResponse.<Boolean>builder()
                 .success(true)
-                .data(staticCommands.updateGlobalRate(userId, processName, entriesRate))
+                .data(staticCommands.updateGlobalRate(Constants.GLOBAL_RATES, processName, entriesRate))
                 .build();
     }
 
