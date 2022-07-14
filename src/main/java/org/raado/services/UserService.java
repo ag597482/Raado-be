@@ -3,14 +3,16 @@ package org.raado.services;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.Document;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.raado.commands.LocalCacheCommands;
 import org.raado.commands.UserCommands;
 import org.raado.exceptions.ErrorCode;
 import org.raado.exceptions.RaadoException;
-import org.raado.models.Permission;
-import org.raado.models.ProcessName;
-import org.raado.models.User;
+import org.raado.models.*;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -83,5 +85,13 @@ public class UserService {
                     ErrorCode.USER_NOT_FOUND);
         }
         return user;
+    }
+
+    public  Map<ProcessName, Map<String, Integer>> getUserRates(final String userId) {
+        Map<ProcessName, Map<String, Integer>> rates = new HashMap<>();
+        User user = getUserByIdOrPhoneNo(userId, null);
+        user.getPermissions()
+                .forEach(permission -> rates.put(permission.getProcessName(), permission.getEntriesRate()));
+        return rates;
     }
 }

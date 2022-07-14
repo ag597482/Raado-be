@@ -92,6 +92,17 @@ public class UserResource {
     @GET
     @Produces(value = MediaType.APPLICATION_JSON)
     @Timed
+    @Path("/getUserRates")
+    public RaadoResponse<Map<ProcessName, Map<String, Integer>>> getUserRates(@QueryParam("userId") String userId) {
+        return RaadoResponse.<Map<ProcessName, Map<String, Integer>>>builder()
+                .success(true)
+                .data(userService.getUserRates(userId))
+                .build();
+    }
+
+    @GET
+    @Produces(value = MediaType.APPLICATION_JSON)
+    @Timed
     @Path("/validateUser")
     public RaadoResponse<User> validateUser(@QueryParam("phoneNo") String phoneNo, @QueryParam("password") String password) {
         if (Objects.isNull(password) || Objects.isNull(phoneNo)) {
