@@ -74,7 +74,7 @@ public class StaticCommands {
 
     public boolean initializeProcessEntries() {
         final Document query = new Document().append("namespace", Constants.PROCESS_ENTRIES);
-        Map<ProcessName, ArrayList<String>> processWiseEntries = new HashMap<>();
+        Map<ProcessName, ArrayList<ProcessEntry>> processWiseEntries = new HashMap<>();
         Arrays.stream(ProcessName.values()).sequential()
                 .forEach(processName -> processWiseEntries.put(processName, new ArrayList<>()));
         ProcessEntries processEntries = ProcessEntries.builder().namespace(Constants.PROCESS_ENTRIES).processWiseEntries(processWiseEntries).build();
@@ -86,7 +86,7 @@ public class StaticCommands {
 
     public Boolean updateProcessEntries(final String namespace,
                                         final ProcessName processName,
-                                        final ArrayList<String> processEntries) {
+                                        final ArrayList<ProcessEntry> processEntries) {
         final Document query = new Document().append("namespace", namespace);
         boolean successfulUpdate = false;
         try {
@@ -105,7 +105,7 @@ public class StaticCommands {
         return successfulUpdate;
     }
 
-    public Map<ProcessName, ArrayList<String>> getProcessWiseEntries() {
+    public Map<ProcessName, ArrayList<ProcessEntry>> getProcessWiseEntries() {
         ProcessEntries processEntries = new ProcessEntries();
         try {
             final Document query = new Document().append("namespace", Constants.PROCESS_ENTRIES);

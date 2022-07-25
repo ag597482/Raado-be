@@ -7,6 +7,7 @@ import org.raado.commands.StaticCommands;
 import org.raado.exceptions.ErrorCode;
 import org.raado.exceptions.RaadoException;
 import org.raado.models.Constants;
+import org.raado.models.ProcessEntry;
 import org.raado.models.ProcessName;
 import org.raado.response.RaadoResponse;
 
@@ -45,8 +46,8 @@ public class StaticResource {
     @Produces(value = MediaType.APPLICATION_JSON)
     @Timed
     @Path("/getProcessWiseEntries")
-    public RaadoResponse<Map<ProcessName, ArrayList<String>>> getProcessWiseEntries() {
-        return RaadoResponse.<Map<ProcessName, ArrayList<String>>>builder()
+    public RaadoResponse<Map<ProcessName, ArrayList<ProcessEntry>>> getProcessWiseEntries() {
+        return RaadoResponse.<Map<ProcessName, ArrayList<ProcessEntry>>>builder()
                 .success(true)
                 .data(staticCommands.getProcessWiseEntries())
                 .build();
@@ -73,7 +74,7 @@ public class StaticResource {
     @Path("/{processName}/updateProcessEntries")
     public RaadoResponse<Boolean> updateUserProcessEntries(@PathParam("processName") ProcessName processName,
                                                            @QueryParam("namespace") String namespace,
-                                                           @Valid ArrayList<String> processEntries) {
+                                                           @Valid ArrayList<ProcessEntry> processEntries) {
         if (Objects.isNull(namespace) || Objects.isNull(processEntries)) {
             throw new RaadoException("namespace and it's entries can not be null",
                     ErrorCode.CANNOT_BE_NULL);

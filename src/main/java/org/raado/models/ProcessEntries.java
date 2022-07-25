@@ -16,6 +16,5 @@ import java.util.Map;
 @NoArgsConstructor
 public class ProcessEntries {
     String namespace;
-    Map<ProcessName, ArrayList<String>> processWiseEntries;
-
+    Map<ProcessName, ArrayList<ProcessEntry>> processWiseEntries;
 }
