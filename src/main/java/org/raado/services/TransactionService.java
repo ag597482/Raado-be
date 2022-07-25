@@ -7,9 +7,7 @@ import org.raado.models.ProcessName;
 import org.raado.models.Transaction;
 import org.raado.models.TransactionStatus;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -78,6 +76,12 @@ public class TransactionService {
             filteredTransactions = filteredTransactions.stream()
                     .filter(transaction -> transaction.getStatus() == status)
                     .collect(Collectors.toList());
+        filteredTransactions.sort(new Comparator<Transaction>() {
+            public int compare(Transaction o1, Transaction o2) {
+                // compare two instance of `Score` and return `int` as result.
+                return o2.getTimeOfTransaction().compareTo(o1.getTimeOfTransaction());
+            }
+        });
         return filteredTransactions;
     }
 }

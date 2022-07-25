@@ -10,6 +10,7 @@ org/raado/resources/StaticResource.class
 org/raado/exceptions/RaadoException.class
 org/raado/services/UserService.class
 org/raado/exceptions/RaadoExceptionMapper.class
+org/raado/services/TransactionService$1.class
 org/raado/configs/CacheConfig.class
 org/raado/App$1.class
 org/raado/resources/DebugResource.class

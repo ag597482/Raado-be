@@ -113,22 +113,31 @@ public class TransactionCommands {
         if(Objects.nonNull(userPermission)) {
             Map<String, Integer> rate = userPermission.getEntriesRate();
             Map<String, Integer> globalRate = staticCommands.getGlobalRates().get(fromProcess);
-            if(Objects.nonNull(rate) && rate.size()==0) {
+            if(userRatePresent(rate)) {
                 entries.forEach((k,v) -> {
-                    if(rate.containsKey(k)) {
+                    if(rate.containsKey(k) && Objects.nonNull(rate.get(k))) {
                         sum[0] = sum[0] + (rate.get(k) * v);
                     }
                 });
             }
             else {
                 entries.forEach((k,v) -> {
-                    if(globalRate.containsKey(k)) {
+                    if(globalRate.containsKey(k) && Objects.nonNull(globalRate.get(k))) {
                         sum[0] = sum[0] + (globalRate.get(k) * v);
                     }
                 });
             }
         }
         return sum[0];
+    }
+
+    private boolean userRatePresent(Map<String, Integer> rate) {
+        if(Objects.isNull(rate) || rate.size()==0) {
+            return false;
+        }
+        int s=0;
+        final List<Integer> nonZero = rate.values().stream().filter(v -> Objects.nonNull(v) && (v!= 0)).toList();
+        return nonZero.size() != 0;
     }
 
     private void validateTransaction(final Transaction transaction) {
