@@ -27,16 +27,29 @@ public class StaticCommands {
     }
 
     public  Map<ProcessName, Map<String, Integer>> getGlobalRates() {
-        StaticRates globalRates = new StaticRates();
+        ProcessWiseConstants globalRates = new ProcessWiseConstants();
         try {
             final Document query = new Document().append("namespace", Constants.GLOBAL_RATES);
             final ObjectMapper objectMapper = new ObjectMapper();
-            globalRates = objectMapper.readValue(staticResourcesCollection.find(query).iterator().next().toJson(), StaticRates.class);
+            globalRates = objectMapper.readValue(staticResourcesCollection.find(query).iterator().next().toJson(), ProcessWiseConstants.class);
 
         } catch (IOException e) {
             log.error("Error converting json to JAVA" , e);
         }
         return globalRates.getRates();
+    }
+
+    public  Map<ProcessName, Map<String, Integer>> getGlobalStock() {
+        ProcessWiseConstants globalStocks = new ProcessWiseConstants();
+        try {
+            final Document query = new Document().append("namespace", Constants.GLOBAL_STOCK);
+            final ObjectMapper objectMapper = new ObjectMapper();
+            globalStocks = objectMapper.readValue(staticResourcesCollection.find(query).iterator().next().toJson(), ProcessWiseConstants.class);
+
+        } catch (IOException e) {
+            log.error("Error converting json to JAVA" , e);
+        }
+        return globalStocks.getRates();
     }
 
     public Boolean updateGlobalRate(final String namespace,
@@ -46,10 +59,10 @@ public class StaticCommands {
         boolean successfulUpdate = false;
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
-            final StaticRates globalRates = objectMapper.readValue(staticResourcesCollection.find(query).iterator().next().toJson(), StaticRates.class);
+            final ProcessWiseConstants globalRates = objectMapper.readValue(staticResourcesCollection.find(query).iterator().next().toJson(), ProcessWiseConstants.class);
             globalRates.getRates().put(processName, entriesRate);
             successfulUpdate = staticResourcesCollection
-                    .replaceOne(query, Objects.requireNonNull(RaadoUtils.<StaticRates>convertToDocument(globalRates))).wasAcknowledged();
+                    .replaceOne(query, Objects.requireNonNull(RaadoUtils.<ProcessWiseConstants>convertToDocument(globalRates))).wasAcknowledged();
            if(!successfulUpdate)
                 return null;
         } catch (Exception me) {
@@ -62,14 +75,26 @@ public class StaticCommands {
 
     public boolean initializeGlobalRates() {
         final Document query = new Document().append("namespace", Constants.GLOBAL_RATES);
-        Map<ProcessName, Map<String, Integer>> initialGlobalRates = new HashMap<>();
+        final Map<ProcessName, Map<String, Integer>> initialGlobalRates = new HashMap<>();
         Arrays.stream(ProcessName.values()).sequential()
                 .forEach(processName -> initialGlobalRates.put(processName, new HashMap<>()));
-        StaticRates globalRates = StaticRates.builder().namespace(Constants.GLOBAL_RATES).rates(initialGlobalRates).build();
-        UpdateResult updateResult = staticResourcesCollection.replaceOne(query, Objects.requireNonNull(RaadoUtils.<StaticRates>convertToDocument(globalRates)));
+        final ProcessWiseConstants globalRates = ProcessWiseConstants.builder().namespace(Constants.GLOBAL_RATES).rates(initialGlobalRates).build();
+        final UpdateResult updateResult = staticResourcesCollection.replaceOne(query, Objects.requireNonNull(RaadoUtils.<ProcessWiseConstants>convertToDocument(globalRates)));
         if (updateResult.getMatchedCount() != 0)
-        return updateResult.wasAcknowledged();
-        return staticResourcesCollection.insertOne(Objects.requireNonNull(RaadoUtils.<StaticRates>convertToDocument(globalRates))).wasAcknowledged();
+            return updateResult.wasAcknowledged();
+        return staticResourcesCollection.insertOne(Objects.requireNonNull(RaadoUtils.<ProcessWiseConstants>convertToDocument(globalRates))).wasAcknowledged();
+    }
+
+    public boolean initializeGlobalStock() {
+        final Document query = new Document().append("namespace", Constants.GLOBAL_STOCK);
+        final Map<ProcessName, Map<String, Integer>> initialGlobalStock = new HashMap<>();
+        Arrays.stream(ProcessName.values()).sequential()
+                .forEach(processName -> initialGlobalStock.put(processName, new HashMap<>()));
+        final ProcessWiseConstants globalStock = ProcessWiseConstants.builder().namespace(Constants.GLOBAL_STOCK).rates(initialGlobalStock).build();
+        final UpdateResult updateResult = staticResourcesCollection.replaceOne(query, Objects.requireNonNull(RaadoUtils.<ProcessWiseConstants>convertToDocument(globalStock)));
+        if (updateResult.getMatchedCount() != 0)
+            return updateResult.wasAcknowledged();
+        return staticResourcesCollection.insertOne(Objects.requireNonNull(RaadoUtils.<ProcessWiseConstants>convertToDocument(globalStock))).wasAcknowledged();
     }
 
     public boolean initializeProcessEntries() {
@@ -77,7 +102,7 @@ public class StaticCommands {
         Map<ProcessName, ArrayList<ProcessEntry>> processWiseEntries = new HashMap<>();
         Arrays.stream(ProcessName.values()).sequential()
                 .forEach(processName -> processWiseEntries.put(processName, new ArrayList<>()));
-        ProcessEntries processEntries = ProcessEntries.builder().namespace(Constants.PROCESS_ENTRIES).processWiseEntries(processWiseEntries).build();
+        final ProcessEntries processEntries = ProcessEntries.builder().namespace(Constants.PROCESS_ENTRIES).processWiseEntries(processWiseEntries).build();
         UpdateResult updateResult = staticResourcesCollection.replaceOne(query, Objects.requireNonNull(RaadoUtils.<ProcessEntries>convertToDocument(processEntries)));
         if (updateResult.getMatchedCount() != 0)
             return updateResult.wasAcknowledged();

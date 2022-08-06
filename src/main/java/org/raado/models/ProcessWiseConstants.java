@@ -13,7 +13,7 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class StaticRates {
+public class ProcessWiseConstants {
     String namespace;
     Map<ProcessName, Map<String, Integer>> rates;
 }
