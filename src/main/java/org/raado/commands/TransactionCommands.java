@@ -17,6 +17,7 @@ import org.raado.utils.RaadoUtils;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class TransactionCommands {
@@ -60,7 +61,7 @@ public class TransactionCommands {
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
             updatedTransaction = objectMapper.readValue(transactionCollection.find().filter(query).iterator().next().toJson(), Transaction.class);
-            validateStocks(updatedTransaction);
+            //validateStocks(updatedTransaction);
             TimeZone.setDefault(TimeZone.getTimeZone("IST"));
             updatedTransaction.setStatus(transactionStatus);
             updatedTransaction.setComment(comment);
@@ -142,13 +143,15 @@ public class TransactionCommands {
     }
 
     private void validateStocks(final Transaction transaction) {
-        Map<String, Integer> globalProcessStock = staticCommands.getGlobalStock().get(transaction.getFromProcess());
+        Map<String, Integer> globalFromProcessStock = staticCommands.getGlobalStock().get(transaction.getFromProcess());
         transaction.getEntries().forEach((entry,value) -> {
-            if (!globalProcessStock.containsKey(entry) || globalProcessStock.get(entry) < value) {
+            if (transaction.getFromProcess()!= ProcessName.UNLOAD_BAMBOO && getSum(globalFromProcessStock) < value) {
                 throw new RaadoException("Either add stock or reject the transaction as there are not this much stocks.",
                     ErrorCode.NEGATIVE_STOCK);
             }
         });
+        Map<String, Integer> globalToProcessStock = staticCommands.getGlobalStock().get(transaction.getToProcess());
+
     }
 
     private void validateTransaction(final Transaction transaction) {
@@ -169,6 +172,12 @@ public class TransactionCommands {
         }
         throw new RaadoException("Users don't have write permissions.",
                 ErrorCode.PERMISSIONS_ACCESS_ISSUE);
+    }
+
+    private int getSum(Map<String, Integer> processEntry) {
+        AtomicInteger s = new AtomicInteger();
+        processEntry.forEach((k,v) -> s.set(s.get() + v));
+        return s.get();
     }
 
     private boolean validateUserPermissions(final User user, final ProcessName processName) {

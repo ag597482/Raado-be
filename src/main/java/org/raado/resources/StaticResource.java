@@ -14,7 +14,6 @@ import org.raado.response.RaadoResponse;
 import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
@@ -75,7 +74,7 @@ public class StaticResource {
         }
         return RaadoResponse.<Boolean>builder()
                 .success(true)
-                .data(staticCommands.updateGlobalRate(Constants.GLOBAL_RATES, processName, entriesRate))
+                .data(staticCommands.updateGlobalProcessWiseConstants(Constants.GLOBAL_RATES, processName, entriesRate))
                 .build();
     }
 

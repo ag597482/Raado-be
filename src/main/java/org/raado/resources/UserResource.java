@@ -142,7 +142,7 @@ public class UserResource {
         if(userId.equals(Constants.GLOBAL_RATES)) {
             return RaadoResponse.<Boolean>builder()
                     .success(true)
-                    .data(staticCommands.updateGlobalRate(Constants.GLOBAL_RATES, processName, entriesRate))
+                    .data(staticCommands.updateGlobalProcessWiseConstants(Constants.GLOBAL_RATES, processName, entriesRate))
                     .build();
         }
         return RaadoResponse.<Boolean>builder()
