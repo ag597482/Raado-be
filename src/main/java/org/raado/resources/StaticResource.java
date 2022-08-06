@@ -45,6 +45,17 @@ public class StaticResource {
     @GET
     @Produces(value = MediaType.APPLICATION_JSON)
     @Timed
+    @Path("/getGlobalStocks")
+    public RaadoResponse<Map<ProcessName, Map<String, Integer>>> getGlobalStocks() {
+        return RaadoResponse.<Map<ProcessName, Map<String, Integer>>>builder()
+                .success(true)
+                .data(staticCommands.getGlobalStock())
+                .build();
+    }
+
+    @GET
+    @Produces(value = MediaType.APPLICATION_JSON)
+    @Timed
     @Path("/getProcessWiseEntries")
     public RaadoResponse<Map<ProcessName, ArrayList<ProcessEntry>>> getProcessWiseEntries() {
         return RaadoResponse.<Map<ProcessName, ArrayList<ProcessEntry>>>builder()

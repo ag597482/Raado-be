@@ -52,14 +52,15 @@ public class TransactionCommands {
     }
 
     public Transaction updateTransaction(final String transactionId,
-                                     final TransactionStatus transactionStatus,
-                                     final String comment) {
+                                         final TransactionStatus transactionStatus,
+                                         final String comment) {
         final Document query = new Document().append("transactionId",  transactionId);
         boolean successfulUpdate = false;
         final Transaction updatedTransaction;
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
             updatedTransaction = objectMapper.readValue(transactionCollection.find().filter(query).iterator().next().toJson(), Transaction.class);
+            validateStocks(updatedTransaction);
             TimeZone.setDefault(TimeZone.getTimeZone("IST"));
             updatedTransaction.setStatus(transactionStatus);
             updatedTransaction.setComment(comment);
@@ -138,6 +139,16 @@ public class TransactionCommands {
         int s=0;
         final List<Integer> nonZero = rate.values().stream().filter(v -> Objects.nonNull(v) && (v!= 0)).toList();
         return nonZero.size() != 0;
+    }
+
+    private void validateStocks(final Transaction transaction) {
+        Map<String, Integer> globalProcessStock = staticCommands.getGlobalStock().get(transaction.getFromProcess());
+        transaction.getEntries().forEach((entry,value) -> {
+            if (!globalProcessStock.containsKey(entry) || globalProcessStock.get(entry) < value) {
+                throw new RaadoException("Either add stock or reject the transaction as there are not this much stocks.",
+                    ErrorCode.NEGATIVE_STOCK);
+            }
+        });
     }
 
     private void validateTransaction(final Transaction transaction) {

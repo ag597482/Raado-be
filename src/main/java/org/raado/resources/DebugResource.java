@@ -34,9 +34,9 @@ public class DebugResource {
     }
 
     @GET
-    @Path("/initializeGlobalRates")
+    @Path("/initializeGlobalRatesAndStocks")
     @Produces(MediaType.APPLICATION_JSON)
-    public boolean initializeGlobalRates() {
+    public boolean initializeGlobalRatesAndStocks() {
         return staticCommands.initializeGlobalRates() && staticCommands.initializeGlobalStock();
     }
 
