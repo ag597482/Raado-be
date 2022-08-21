@@ -49,6 +49,7 @@ public class TransactionService {
                                                      final ProcessName commonProcess,
                                                      final String fromUserId,
                                                      final String toUserId,
+                                                     final String commonUserId,
                                                      final TransactionStatus status) {
         final List<Transaction> allTransactions = getAllTransactions();
         List<Transaction> filteredTransactions = new ArrayList<>(allTransactions);
@@ -71,6 +72,10 @@ public class TransactionService {
         if(toUserId!=null && toUserId.length()>0)
             filteredTransactions = filteredTransactions.stream()
                     .filter(transaction -> transaction.getToUserId().equals(toUserId))
+                    .collect(Collectors.toList());
+        if(commonUserId!=null && commonUserId.length()>0)
+            filteredTransactions = filteredTransactions.stream()
+                    .filter(transaction -> transaction.getFromUserId().equals(commonUserId) || transaction.getToUserId().equals(commonUserId))
                     .collect(Collectors.toList());
         if(status != null)
             filteredTransactions = filteredTransactions.stream()
