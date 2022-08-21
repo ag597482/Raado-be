@@ -63,11 +63,23 @@ public class TransactionCommands {
             updatedTransaction = objectMapper.readValue(transactionCollection.find().filter(query).iterator().next().toJson(), Transaction.class);
             //validateStocks(updatedTransaction);
             TimeZone.setDefault(TimeZone.getTimeZone("IST"));
+            if(transactionStatus == TransactionStatus.APPROVED) {
+                if (updatedTransaction.getToProcess() == ProcessName.WAREHOUSE) {
+                    addWareHouseStocks(updatedTransaction);
+                }
+                if (updatedTransaction.getFromProcess() == ProcessName.WAREHOUSE) {
+                    validateWareHouseStocks(updatedTransaction);
+                }
+            }
             updatedTransaction.setStatus(transactionStatus);
             updatedTransaction.setComment(comment);
             updatedTransaction.setTimeOfApproval(new Date());
             UpdateResult result = transactionCollection.replaceOne(query, Objects.requireNonNull(RaadoUtils.<Transaction>convertToDocument(updatedTransaction)));
             successfulUpdate = result.wasAcknowledged();
+        } catch (RaadoException raadoException) {
+            log.error("negative stock error => " + raadoException.getMessage());
+            throw new RaadoException(raadoException.getMessage(),
+                    ErrorCode.NEGATIVE_STOCK);
         } catch (Exception me) {
             log.error("Error while updating user permissions =>" + me);
             throw new RaadoException("Network error please try after sometime.",
@@ -142,16 +154,24 @@ public class TransactionCommands {
         return nonZero.size() != 0;
     }
 
-    private void validateStocks(final Transaction transaction) {
-        Map<String, Integer> globalFromProcessStock = staticCommands.getGlobalStock().get(transaction.getFromProcess());
+
+    private void addWareHouseStocks(final Transaction transaction) {
+        Map<String, Integer> wareHouseStock = staticCommands.getGlobalStock().get(transaction.getFromProcess());
         transaction.getEntries().forEach((entry,value) -> {
-            if (transaction.getFromProcess()!= ProcessName.UNLOAD_BAMBOO && getSum(globalFromProcessStock) < value) {
-                throw new RaadoException("Either add stock or reject the transaction as there are not this much stocks.",
+            final int pastValue = wareHouseStock.getOrDefault(entry, 0);
+            wareHouseStock.put(entry, pastValue + value);
+        });
+        staticCommands.updateGlobalProcessWiseConstants(Constants.GLOBAL_STOCK, ProcessName.WAREHOUSE, wareHouseStock);
+    }
+
+    private void validateWareHouseStocks(final Transaction transaction) {
+        Map<String, Integer> wareHouseStock = staticCommands.getGlobalStock().get(transaction.getFromProcess());
+        transaction.getEntries().forEach((entry,value) -> {
+            if (!wareHouseStock.containsKey(entry) || wareHouseStock.get(entry) < value) {
+                throw new RaadoException("Either add stock or reject the transaction as there are not this much stocks for - " + entry,
                     ErrorCode.NEGATIVE_STOCK);
             }
         });
-        Map<String, Integer> globalToProcessStock = staticCommands.getGlobalStock().get(transaction.getToProcess());
-
     }
 
     private void validateTransaction(final Transaction transaction) {

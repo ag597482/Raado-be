@@ -54,13 +54,13 @@ public class StaticCommands {
 
     public Boolean updateGlobalProcessWiseConstants(final String namespace,
                                                     final ProcessName processName,
-                                                    final Map<String, Integer> enteries) {
+                                                    final Map<String, Integer> entries) {
         final Document query = new Document().append("namespace", namespace);
         boolean successfulUpdate = false;
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
             final ProcessWiseConstants globalRates = objectMapper.readValue(staticResourcesCollection.find(query).iterator().next().toJson(), ProcessWiseConstants.class);
-            globalRates.getRates().put(processName, enteries);
+            globalRates.getRates().put(processName, entries);
             successfulUpdate = staticResourcesCollection
                     .replaceOne(query, Objects.requireNonNull(RaadoUtils.<ProcessWiseConstants>convertToDocument(globalRates))).wasAcknowledged();
            if(!successfulUpdate)
