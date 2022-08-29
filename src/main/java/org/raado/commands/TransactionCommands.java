@@ -156,7 +156,7 @@ public class TransactionCommands {
 
 
     private void addWareHouseStocks(final Transaction transaction) {
-        Map<String, Integer> wareHouseStock = staticCommands.getGlobalStock().get(transaction.getFromProcess());
+        Map<String, Integer> wareHouseStock = new HashMap<>(staticCommands.getGlobalStock().get(ProcessName.WAREHOUSE));
         transaction.getEntries().forEach((entry,value) -> {
             final int pastValue = wareHouseStock.getOrDefault(entry, 0);
             wareHouseStock.put(entry, pastValue + value);
