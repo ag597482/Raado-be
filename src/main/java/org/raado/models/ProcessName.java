@@ -5,8 +5,12 @@ public enum ProcessName {
     CROSS_CUTTING,
     SLIVER_MAKING,
     ROUND_STICK_MAKING,
+    SIZING,
+    POLISHING,
+    WAREHOUSE,
+
+    SPLITTING,
     SIZING_AND_POLISHING,
     SORTING,
-    PRODUCT,
-    WAREHOUSE
+    PRODUCT;
 }
