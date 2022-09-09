@@ -89,7 +89,8 @@ public class StaticCommands {
         final Document query = new Document().append("namespace", Constants.GLOBAL_STOCK);
         final Map<ProcessName, Map<String, Integer>> initialGlobalStock = new HashMap<>();
         Arrays.stream(ProcessName.values()).sequential()
-                .forEach(processName -> initialGlobalStock.put(processName, new HashMap<>()));
+                .forEach(processName -> initialGlobalStock.put(processName,
+                        new HashMap<String, Integer>(){{ put(Constants.BAMBOO_STOCK, 0); }}));
         final ProcessWiseConstants globalStock = ProcessWiseConstants.builder().namespace(Constants.GLOBAL_STOCK).rates(initialGlobalStock).build();
         final UpdateResult updateResult = staticResourcesCollection.replaceOne(query, Objects.requireNonNull(RaadoUtils.<ProcessWiseConstants>convertToDocument(globalStock)));
         if (updateResult.getMatchedCount() != 0)

@@ -3,6 +3,7 @@ org/raado/commands/TransactionCommands.class
 org/raado/utils/RaadoUtils.class
 org/raado/App.class
 org/raado/commands/UserCommands.class
+org/raado/commands/StaticCommands$1.class
 org/raado/services/TransactionService.class
 org/raado/resources/TransactionResource.class
 org/raado/models/ProcessName.class

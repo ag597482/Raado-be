@@ -7,10 +7,5 @@ public enum ProcessName {
     ROUND_STICK_MAKING,
     SIZING,
     POLISHING,
-    WAREHOUSE,
-
-    SPLITTING,
-    SIZING_AND_POLISHING,
-    SORTING,
-    PRODUCT;
+    WAREHOUSE
 }

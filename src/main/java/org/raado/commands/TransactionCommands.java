@@ -68,7 +68,7 @@ public class TransactionCommands {
                     addWareHouseStocks(updatedTransaction);
                 }
                 if (updatedTransaction.getFromProcess() == ProcessName.WAREHOUSE) {
-                    validateWareHouseStocks(updatedTransaction);
+                    validateAndUpdateWareHouseStocks(updatedTransaction);
                 }
             }
             updatedTransaction.setStatus(transactionStatus);
@@ -157,21 +157,49 @@ public class TransactionCommands {
 
     private void addWareHouseStocks(final Transaction transaction) {
         Map<String, Integer> wareHouseStock = new HashMap<>(staticCommands.getGlobalStock().get(ProcessName.WAREHOUSE));
+
+        // validating from process stock
+        Map<String, Integer> fromProcessStock = new HashMap<>(staticCommands.getGlobalStock().get(transaction.getFromProcess()));
+        if (transaction.getFromProcess() != ProcessName.UNLOAD_BAMBOO) {
+            int transactionBambooWt = getSum(transaction.getEntries());
+            if (fromProcessStock.get(Constants.BAMBOO_STOCK) < transactionBambooWt) {
+                throw new RaadoException("Either add stock or reject the transaction as there are not this much stocks for - " + transaction.getEntries(),
+                        ErrorCode.NEGATIVE_STOCK);
+            }
+            fromProcessStock.put(Constants.BAMBOO_STOCK, fromProcessStock.get(Constants.BAMBOO_STOCK) - transactionBambooWt);
+        }
+
+        // adding stocks to warehouse
         transaction.getEntries().forEach((entry,value) -> {
             final int pastValue = wareHouseStock.getOrDefault(entry, 0);
             wareHouseStock.put(entry, pastValue + value);
         });
+        wareHouseStock.put(Constants.BAMBOO_STOCK, wareHouseStock.get(Constants.BAMBOO_STOCK) + getSum(transaction.getEntries()));
+
+        staticCommands.updateGlobalProcessWiseConstants(Constants.GLOBAL_STOCK, transaction.getFromProcess(), fromProcessStock);
         staticCommands.updateGlobalProcessWiseConstants(Constants.GLOBAL_STOCK, ProcessName.WAREHOUSE, wareHouseStock);
     }
 
-    private void validateWareHouseStocks(final Transaction transaction) {
+    private void validateAndUpdateWareHouseStocks(final Transaction transaction) {
         Map<String, Integer> wareHouseStock = staticCommands.getGlobalStock().get(transaction.getFromProcess());
+        // validating stocks from warehouse
         transaction.getEntries().forEach((entry,value) -> {
             if (!wareHouseStock.containsKey(entry) || wareHouseStock.get(entry) < value) {
                 throw new RaadoException("Either add stock or reject the transaction as there are not this much stocks for - " + entry,
                     ErrorCode.NEGATIVE_STOCK);
             }
         });
+        transaction.getEntries().forEach((entry,value) -> {
+            wareHouseStock.put(entry, wareHouseStock.get(entry)-value);
+        });
+        wareHouseStock.put(Constants.BAMBOO_STOCK, wareHouseStock.get(Constants.BAMBOO_STOCK) - getSum(transaction.getEntries()));
+
+        // adding stocks to toProcess
+        Map<String, Integer> toProcessStock = new HashMap<>(staticCommands.getGlobalStock().get(transaction.getToProcess()));
+        toProcessStock.put(Constants.BAMBOO_STOCK, toProcessStock.get(Constants.BAMBOO_STOCK) + getSum(transaction.getEntries()));
+
+        staticCommands.updateGlobalProcessWiseConstants(Constants.GLOBAL_STOCK, transaction.getToProcess(), toProcessStock);
+        staticCommands.updateGlobalProcessWiseConstants(Constants.GLOBAL_STOCK, ProcessName.WAREHOUSE, wareHouseStock);
     }
 
     private void validateTransaction(final Transaction transaction) {
